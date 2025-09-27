@@ -1,0 +1,16 @@
+{
+  "Vocabulary": [
+    {
+      "word": "abundant",
+      "meaning": "Existing or available in large quantities",
+      "synonyms": ["plentiful", "ample"],
+      "antonyms": ["scarce", "rare"]
+    },
+    {
+      "word": "elated",
+      "meaning": "Ecstatically happy",
+      "synonyms": ["thrilled","overjoyed"],
+      "antonyms": ["miserable","depressed"]
+    }
+  ]
+}
