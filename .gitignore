@@ -2,7 +2,15 @@ venv/
 flashcard_env/
 **/__pycache__/
 *.pyc
+**/.python-version
 .DS_Store
 **/.env
-tts_audio/
-saved_flashcards/
+**/.vscode/
+**/.idead
+tts_audio
+saved_flashcards
+tts_audio/**
+saved_flashcards/**
+**/TODO.md
+**/SETUP.md
+**/README.md

@@ -3,6 +3,7 @@ import json
 import tkinter as tk
 from . import layout
 from . import widgets
+from datetime import datetime
 
 class FlashcardUI:
     def __init__(self, root):
@@ -10,6 +11,9 @@ class FlashcardUI:
         self.flashcards = []
         self.current_topic = None
         self.card_index = None
+
+        # suppress handling of listbox selection events when we change selection programmatically
+        self._suppress_listbox_select = False
 
         ui = layout.setup_layout(
             root,
@@ -45,17 +49,30 @@ class FlashcardUI:
         if not getattr(self, "cards_listbox", None):
             return
         lb = self.cards_listbox
+        # prevent selection events from firing while we populate/select
+        self._suppress_listbox_select = True
         lb.delete(0, tk.END)
         for i, c in enumerate(cards):
             title = c.get("word") or c.get("front") or c.get("term") or f"Card {i+1}"
             lb.insert(tk.END, title)
         # select first item
         if cards:
-            lb.selection_clear(0, tk.END)
-            lb.selection_set(0)
-            lb.see(0)
+            try:
+                lb.selection_clear(0, tk.END)
+                lb.selection_set(0)
+                lb.see(0)
+            finally:
+                # defer reenabling to allow any selection callbacks already queued to run and exit
+                self.root.after(50, lambda: setattr(self, "_suppress_listbox_select", False))
+        else:
+            # if no cards, re-enable immediately
+            self._suppress_listbox_select = False
 
     def _on_card_select(self, event):
+        # ignore events triggered while we are programmatically changing selection
+        if getattr(self, "_suppress_listbox_select", False):
+            return
+
         lb = event.widget
         try:
             sel = lb.curselection()
@@ -64,6 +81,11 @@ class FlashcardUI:
             idx = int(sel[0])
         except Exception:
             return
+
+        # if user clicked the already-selected card, nothing to do
+        if self.card_index is not None and idx == self.card_index:
+            return
+
         # If cards have topics, we need the list filtered by topic; reuse _current_card logic by index.
         # Set card_index to idx and show card
         self.card_index = idx
@@ -81,14 +103,29 @@ class FlashcardUI:
 
     def _refresh_saved_files(self):
         """Refresh the saved-files listbox from disk (safe no-op if no listbox)."""
+        print("[FlashcardUI] saved_listbox:", getattr(self, "saved_listbox", None))
         if not getattr(self, "saved_listbox", None):
+            print("[FlashcardUI] no saved_listbox to refresh, RETURNING...")
             return
+
+        files = []
+        # Try API helper first (may list files from other places / remote)
         try:
             from ..api.client import fetch_saved_flashcards
             files = fetch_saved_flashcards() or []
         except Exception as e:
-            print("[FlashcardUI] _refresh_saved_files failed:", e)
+            print("[FlashcardUI] _refresh_saved_files fetch failed:", e)
             files = []
+
+        # Fallback: scan local saved_flashcards dir next to gui/
+        if not files:
+            try:
+                saved_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../saved_flashcards"))
+                if os.path.isdir(saved_dir):
+                    files = sorted([f for f in os.listdir(saved_dir) if f.lower().endswith(".json")])
+            except Exception as e:
+                print("[FlashcardUI] _refresh_saved_files fallback scan failed:", e)
+                files = []
 
         lb = self.saved_listbox
         try:
@@ -101,16 +138,11 @@ class FlashcardUI:
 
     def load_topic(self, topic_name):
         """Load cards for topic_name from local JSON and show first card."""
-        import time
-        from ..api.client import generate_flashcards, fetch_saved_flashcards
-
         topic_name = (topic_name or "").strip()
         print(f"[FlashcardUI] load_topic called with: '{topic_name}'")
         if not topic_name:
             print("[FlashcardUI] empty topic, nothing to load")
             return
-
-        # Load local flashcards.json dataset
         path = self._flashcards_path()
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -126,74 +158,47 @@ class FlashcardUI:
         if not topic_cards:
             print(f"[FlashcardUI] found 0 cards for topic '{topic_name}', requesting generation from backend")
             try:
+                from ..api.client import generate_flashcards
                 generated = generate_flashcards(topic_name)
             except Exception as e:
-                print("[FlashcardUI] failed to call generate_flashcards:", e)
+                print("[FlashcardUI] failed to import/api call generate_flashcards:", e)
                 generated = []
 
+            print(f"[FlashcardUI] backend generated {len(generated)} cards for topic '{topic_name}'")
             if generated:
-                # attach topic if missing and prepend to dataset so UI can use them
+                # treat generated cards as the loaded dataset for this topic
+                # if backend returns cards without topic keys, attach the topic
                 for c in generated:
                     if "topic" not in c:
                         c["topic"] = topic_name
+                # prepend generated cards to flashcards list so other flows can use them
                 self.flashcards = generated + (self.flashcards or [])
                 topic_cards = [c for c in self.flashcards if c.get("topic") == topic_name]
 
-                # Give backend a moment to write saved file (if it does) then refresh saved list
-                for _ in range(4):
-                    try:
-                        self._refresh_saved_files()
-                    except Exception:
-                        pass
-                    # quick check if a matching saved file now exists
-                    try:
-                        files = fetch_saved_flashcards() or []
-                        if any(topic_name.lower() in fn.lower() for fn in files):
-                            break
-                    except Exception:
-                        pass
-                    time.sleep(0.25)
-            else:
-                # generation returned nothing — try to detect a saved file created by backend
+                # persist generated cards locally so "Saved files" shows them
                 try:
-                    self._refresh_saved_files()
-                    files = fetch_saved_flashcards() or []
-                    # look for filenames containing the topic name (case-insensitive)
-                    matches = [f for f in files if topic_name.lower() in f.lower()]
-                    if matches:
-                        # pick most recent-looking (last in sorted list)
-                        chosen = matches[-1]
-                        saved_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../saved_flashcards", chosen))
-                        try:
-                            with open(saved_path, "r", encoding="utf-8") as sf:
-                                saved_data = json.load(sf)
-                        except Exception as e:
-                            print("[FlashcardUI] failed to read matched saved file:", e)
-                            saved_data = []
-                        # normalize saved_data into list of cards
-                        cards = []
-                        if isinstance(saved_data, list):
-                            cards = saved_data
-                        elif isinstance(saved_data, dict):
-                            if "cards" in saved_data and isinstance(saved_data["cards"], list):
-                                cards = saved_data["cards"]
-                            elif "flashcards" in saved_data and isinstance(saved_data["flashcards"], list):
-                                cards = saved_data["flashcards"]
-                            else:
-                                for v in saved_data.values():
-                                    if isinstance(v, list):
-                                        cards.extend(v)
-                        if cards:
-                            # treat these as the loaded dataset
-                            self.flashcards = cards
-                            # set topic if not present on cards
-                            for c in self.flashcards:
-                                if "topic" not in c:
-                                    c["topic"] = topic_name
-                            topic_cards = [c for c in self.flashcards if c.get("topic") == topic_name]
-                            print(f"[FlashcardUI] loaded {len(topic_cards)} cards from saved file {chosen}")
+                    saved_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../saved_flashcards"))
+                    os.makedirs(saved_dir, exist_ok=True)
+                    ts = datetime.now().strftime("%Y%m%d%H%M%S")
+                    save_name = f"{topic_name}_{ts}.json"
+                    save_path = os.path.join(saved_dir, save_name)
+                    with open(save_path, "w", encoding="utf-8") as sf:
+                        json.dump(generated, sf, ensure_ascii=False, indent=2)
                 except Exception as e:
-                    print("[FlashcardUI] fallback saved-file load failed:", e)
+                    print("[FlashcardUI] failed to save generated cards locally:", e)
+
+                # refresh saved-files view in case backend saved generated cards or we just wrote one
+                try:
+                    print("[FlashcardUI] refreshing saved files list after generation")
+                    self._refresh_saved_files()
+                except Exception:
+                    pass
+
+        # Ensure saved-files list is refreshed after a successful load (local or generated)
+        try:
+            self._refresh_saved_files()
+        except Exception:
+            pass
 
         print(f"[FlashcardUI] found {len(topic_cards)} cards for topic '{topic_name}'")
         if not topic_cards:
@@ -202,26 +207,14 @@ class FlashcardUI:
             self._clear_display()
             self.new_word_button.config(state=tk.DISABLED)
             self.speak_button.config(state=tk.DISABLED)
-            # ensure saved list is refreshed for user visibility
-            try:
-                self._refresh_saved_files()
-            except Exception:
-                pass
             return
 
-        # populate cards listbox and update UI
-        self._populate_cards_listbox(topic_cards)
         self.current_topic = topic_name
         self.card_index = 0
         self._update_display(topic_cards[0])
         self.new_word_button.config(state=tk.NORMAL)
         self.speak_button.config(state=tk.NORMAL)
 
-        # ensure saved-files list is refreshed after successful load
-        try:
-            self._refresh_saved_files()
-        except Exception:
-            pass
 
     def load_file(self, filename):
         """Load a saved file (JSON) placed next to gui/ and show first card."""

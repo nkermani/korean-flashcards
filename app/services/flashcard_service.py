@@ -7,11 +7,14 @@ from flashcard_utils import get_topic_file, parse_flashcards
 from datetime import datetime
 import json
 import os
+import re
 
 client = Mistral(api_key=api_key)
 
 def create_flashcards_service(data: dict):
-    topic = data.get("topic", "general").lower()
+    # normalize topic: lowercase, trim, replace whitespace with underscores
+    raw_topic = data.get("topic", "general") or "general"
+    topic = re.sub(r"\s+", "_", raw_topic.strip().lower())
     prompt = f"""
     Create 5 flashcards to help a student learn faster about the topic in KOREAN "{topic}".
     Each flashcard must be a JSON object with:
