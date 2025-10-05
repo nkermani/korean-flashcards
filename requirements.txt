@@ -1,0 +1,9 @@
+dotenv==0.9.9
+fastapi==0.117.1
+gTTS==2.5.4
+mistralai==1.9.10
+pip==25.1.1
+PySimpleGUI==5.0.8.3
+setuptools==80.9.0
+simpleaudio==1.0.4
+uvicorn==0.36.0
