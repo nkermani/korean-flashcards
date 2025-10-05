@@ -1,3 +1,7 @@
+# gui/audio/player.py
+# This module provides functions to play audio files (MP3) by converting them to WAV format
+# and playing them using the simpleaudio library.
+
 import subprocess
 import simpleaudio as sa
 import os

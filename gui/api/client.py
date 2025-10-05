@@ -1,15 +1,22 @@
+# gui/api/client.py
+# This module provides functions to interact with the backend FastAPI service
+# to generate flashcards and fetch saved flashcards.
+
 import os
 import requests
 import json
 
 API_BASE = os.environ.get("MISTRAL_API_URL", "http://localhost:8000")
 
+
 def fetch_saved_flashcards():
     """
     Return a list of filenames found in gui/../saved_flashcards (JSON files).
     Non-blocking and safe if the folder doesn't exist.
     """
-    folder = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "saved_flashcards"))
+    folder = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "saved_flashcards")
+    )
     try:
         if not os.path.isdir(folder):
             return []
@@ -17,6 +24,7 @@ def fetch_saved_flashcards():
         return sorted(files)
     except Exception:
         return []
+
 
 def _find_cards(obj):
     """Recursively find and return the first list of dicts (cards) in obj, or None."""
@@ -44,6 +52,7 @@ def _find_cards(obj):
                 return found
     return None
 
+
 def generate_flashcards(topic):
     """
     Request flashcards from backend POST /flashcards.
@@ -61,7 +70,10 @@ def generate_flashcards(topic):
         data = resp.json()
         # Debug-print actual response to help diagnose shapes
         try:
-            print("[gui.api.client] response body:", json.dumps(data, ensure_ascii=False)[:1000])
+            print(
+                "[gui.api.client] response body:",
+                json.dumps(data, ensure_ascii=False)[:1000],
+            )
         except Exception:
             print("[gui.api.client] response non-serializable, type:", type(data))
 

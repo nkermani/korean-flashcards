@@ -1,3 +1,7 @@
+# app/services/flashcard_service.py
+# This module contains the service logic for creating flashcards using the Mistral API,
+# generating TTS audio, saving flashcards to files, and updating history.
+
 from mistralai import Mistral
 from config import api_key, AUDIO_DIR, DATA_DIR, HISTORY_FILE
 from mistral_client import call_mistral_with_retry
@@ -58,7 +62,7 @@ def create_flashcards_service(data: dict):
             "filename": os.path.basename(topic_file),
             "created_at": now,
             "updated_at": now,
-            "count": len(existing)
+            "count": len(existing),
         }
     else:
         history[topic]["updated_at"] = now
@@ -69,5 +73,5 @@ def create_flashcards_service(data: dict):
         "topic": topic,
         "added": [c["word"] for c in new_cards],
         "file": os.path.basename(topic_file),
-        "total_cards": len(existing)
+        "total_cards": len(existing),
     }

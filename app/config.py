@@ -1,3 +1,6 @@
+# app/config.py
+# This module handles configuration settings, including loading environment variables and setting up directories.
+
 import os
 from dotenv import load_dotenv
 

@@ -1,7 +1,25 @@
+# gui/ui/widgets.py
+# This module provides helper functions to create and manage Tkinter widgets
+# such as labels, buttons, entries, and listboxes. It also includes logic for
+# advancing through flashcards by topic.
+
 import tkinter as tk
 from tkinter import font
 
-def create_label(parent, text=None, row=0, column=0, sticky=None, pady=0, padx=0, font=None, textvariable=None, wraplength=None, **kwargs):
+
+def create_label(
+    parent,
+    text=None,
+    row=0,
+    column=0,
+    sticky=None,
+    pady=0,
+    padx=0,
+    font=None,
+    textvariable=None,
+    wraplength=None,
+    **kwargs
+):
     """Create and grid a Label. Accepts either text or textvariable and common tk.Label options."""
     opts = {}
     if text is not None:
@@ -26,11 +44,15 @@ def create_label(parent, text=None, row=0, column=0, sticky=None, pady=0, padx=0
     lbl.grid(**grid_opts)
     return lbl
 
-def create_button(root, text, row, column, command=None, state=tk.NORMAL, pady=0, columnspan=1):
+
+def create_button(
+    root, text, row, column, command=None, state=tk.NORMAL, pady=0, columnspan=1
+):
     """Create a button widget."""
     button = tk.Button(root, text=text, command=command, state=state)
     button.grid(row=row, column=column, pady=pady, columnspan=columnspan)
     return button
+
 
 def create_entry(root, width, row, column, padx=0):
     """Create an entry widget."""
@@ -38,17 +60,20 @@ def create_entry(root, width, row, column, padx=0):
     entry.grid(row=row, column=column, padx=padx)
     return entry
 
-def create_listbox(root, height, width, row, column, pady=0):
-    """Create a listbox widget."""
-    listbox = tk.Listbox(root, height=height, width=width)
-    listbox.grid(row=row, column=column, pady=pady)
-    return listbox
 
 def create_listbox(root, height, width, row, column, pady=0):
     """Create a listbox widget."""
     listbox = tk.Listbox(root, height=height, width=width)
     listbox.grid(row=row, column=column, pady=pady)
     return listbox
+
+
+def create_listbox(root, height, width, row, column, pady=0):
+    """Create a listbox widget."""
+    listbox = tk.Listbox(root, height=height, width=width)
+    listbox.grid(row=row, column=column, pady=pady)
+    return listbox
+
 
 # Added helpers for "New word" behavior
 def advance_topic_index(flashcards, current_topic, current_index=None):
@@ -72,7 +97,10 @@ def advance_topic_index(flashcards, current_topic, current_index=None):
     idx = (idx + 1) % len(cards)
     return cards[idx], idx
 
-def create_new_word_button(root, text, row, column, get_state, set_state, update_display, pady=0, columnspan=1):
+
+def create_new_word_button(
+    root, text, row, column, get_state, set_state, update_display, pady=0, columnspan=1
+):
     """
     Create a "New word" button wired to advance topic flashcards.
     - get_state() -> (flashcards, current_topic, current_index)
@@ -80,6 +108,7 @@ def create_new_word_button(root, text, row, column, get_state, set_state, update
     - update_display(card) -> update UI to show given card
     This keeps widgets.py decoupled from application state.
     """
+
     def _on_click():
         flashcards, current_topic, current_index = get_state()
         card, new_index = advance_topic_index(flashcards, current_topic, current_index)
@@ -95,4 +124,3 @@ def create_new_word_button(root, text, row, column, get_state, set_state, update
     btn = tk.Button(root, text=text, command=_on_click)
     btn.grid(row=row, column=column, pady=pady, columnspan=columnspan)
     return btn
-

@@ -1,5 +1,9 @@
+# gui/main.py
+# This is the entry point for the GUI application using Tkinter.
+
 import tkinter as tk
 from .ui.app import FlashcardUI
+
 
 def run_app():
     root = tk.Tk()

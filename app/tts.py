@@ -1,6 +1,10 @@
+# app/tts.py
+# This module provides text-to-speech functionality using gTTS, including file management and reuse
+
 from gtts import gTTS
 import os
 import random
+
 
 def generate_tts(word: str, audio_dir: str) -> str:
     """Generate TTS audio for a word and return the file path.

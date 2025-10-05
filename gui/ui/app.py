@@ -1,3 +1,6 @@
+# gui/ui/app.py
+# This module implements the main GUI application for displaying and interacting with flashcards.
+
 import os
 import json
 import tkinter as tk
