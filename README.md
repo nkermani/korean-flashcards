@@ -1,13 +1,5 @@
 # Korean Flashcards App
 
-## Quick start
-
-- Prepare environment:
-  - macOS / Linux:
-    - `source setup.sh`
-  - Run the app:
-    - `./start.sh`
-
 ## What this app does
 
 This app generates and reviews Korean flashcards by topic. Each flashcard contains:
@@ -16,17 +8,31 @@ This app generates and reviews Korean flashcards by topic. Each flashcard contai
 - `Example sentence`
 - `Audio pronunciation`
 - `Synonyms & Antonyms`
-
 ---
-
 Export to .csv file for Anki import
+
+## Requirements
+- python==3.11
+
+## Quick Start
+- Prepare environment:
+  - Navigate to root of repository
+  - Run setup script:
+    - `./setup.sh`
+  - Add your MITRAL_API_KEY in `app/.env`
+  - Run the app:
+    - `./start.sh`
+
 
 ## Usage examples
 
 - Load flashcards for a topic (UI): open the app and click **Load**.
 - Run tests locally:
-  - `python -m pip install -r requirements.txt`
-  - `python -m pytest tests/`
+  ```
+  source /venv/bin/activate
+  python -m pip install -r requirements.txt
+  python -m pytest tests/
+  ```
 
 ---
 
