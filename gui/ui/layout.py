@@ -8,7 +8,12 @@ from ..api.client import fetch_saved_flashcards
 
 
 def setup_layout(
-    root, load_topic_cb=None, load_file_cb=None, new_word_cb=None, speak_cb=None
+    root,
+    load_topic_cb=None,
+    load_file_cb=None,
+    new_word_cb=None,
+    speak_cb=None,
+    export_anki_cb=None,
 ):
     """Set up the main UI layout. Pass callback functions from app to avoid circular imports."""
     # Variables
@@ -62,6 +67,7 @@ def setup_layout(
     )
     create_button(root, "Exit", 6, 0, command=root.destroy, columnspan=2)
 
+
     # Topic entry
     topic_frame = tk.Frame(root)
     topic_frame.grid(row=7, column=0, columnspan=2, pady=10)
@@ -101,6 +107,16 @@ def setup_layout(
     # Cards list for the currently loaded topic/file
     create_label(root, "Cards:", 10, 0, sticky="w", pady=5)
     cards_listbox = create_listbox(root, 8, 40, 10, 1, pady=5)
+    create_button(
+        root,
+        "Export to Anki",
+        11,
+        0,
+        command=(lambda: export_anki_cb() if export_anki_cb else None),
+        columnspan = 2,
+        pady = 10,
+    )
+
 
     return {
         "word_var": word_var,

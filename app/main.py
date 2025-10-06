@@ -2,7 +2,7 @@
 # This is the main entry point for the FastAPI application, setting up routes and starting the server.
 
 from fastapi import FastAPI
-from routes import flashcards, saved, history
+from app.routes import flashcards, saved, history
 import tkinter as tk
 import uvicorn
 
@@ -26,7 +26,7 @@ app.include_router(history.router)
 
 
 def main():
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
 
 
 if __name__ == "__main__":

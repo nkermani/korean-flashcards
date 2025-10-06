@@ -13,5 +13,6 @@ tts_audio/**
 saved_flashcards/**
 **/TODO.md
 **/SETUP.md
-**/README.md
 **/logs/
+**/anki_export/
+

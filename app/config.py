@@ -8,7 +8,12 @@ load_dotenv()
 
 api_key = os.getenv("MISTRAL_API_KEY")
 if not api_key:
-    raise RuntimeError("Missing MISTRAL_API_KEY in .env file")
+    # Don't raise at import time; some test environments may mock network
+    # interactions and therefore don't require a real API key. Log a warning
+    # instead so callers can decide how to behave.
+    print(
+        "[app.config] Warning: MISTRAL_API_KEY not set; Mistral client will be disabled unless provided at runtime"
+    )
 
 AUDIO_DIR = "tts_audio"
 DATA_DIR = "saved_flashcards"
