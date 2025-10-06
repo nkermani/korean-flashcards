@@ -5,7 +5,8 @@ mistralai==1.9.10
 pip==25.1.1
 PySimpleGUI==5.0.8.3
 setuptools==80.9.0
-simpleaudio==1.0.4
+# simpleaudio requires ALSA headers on Linux; skip on Linux CI
+simpleaudio==1.0.4; sys_platform == "darwin" or sys_platform == "win32"
 uvicorn==0.36.0
 pandas==2.3.3
 # The following are for testing and development purposes

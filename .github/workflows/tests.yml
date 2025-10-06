@@ -7,6 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Install system packages for native extensions
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libasound2-dev build-essential
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
